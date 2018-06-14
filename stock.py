@@ -20,15 +20,14 @@ class Stock:
             name: A string for the name of the stock.
             income_sheet: A dataframe of the income statement of the stock.
             balance_sheet: A dataframe of the balance sheet of the stock.
-            cash_flow_sheet: A dataframe of the statement of cash flow of the stockself.
+            cash_flow_sheet: A dataframe of the statement of cash flow of the stock.
     """
 
     def __init__(self, ticker):
-        """Inits Stock with ticker name and the 3 financial sheets."""
+        """Inits Stock with ticker name and the 3 financial sheets.
 
-
-            Raises: pandas.errors.EmptyDataError: An error occurred trying to access the
-                    ticker's information"""
+            Raises: pandas.errors.EmptyDataError: An error occurred trying to
+                    access the ticker's information"""
 
         try:
             raw = info.get_info(ticker)
@@ -53,6 +52,9 @@ class Stock:
 
     #liquidity
     def current_ratio(self):
+        """Returns the current ratio of a stock.
+
+           Use: measures ability to pay current liabilites with current assets."""
 
         current_assets =0.0
         current_lib = 0.0
@@ -68,6 +70,10 @@ class Stock:
             return current_ratio
 
     def debt_ratio(self):
+        """Retuns the debt ratio of a stock.
+
+           Use: Indicates percentage of assest financed with debt."""
+
         tot_assets =0.0
         tot_lib =0.0
         #"Total assets" in self.balance_sheet.index.values
@@ -83,6 +89,11 @@ class Stock:
 
     #acid test
     def quick_ratio(self):
+        """Returns quick(acid-test) ratio of a stock.
+
+           Use: Shows the ability to pay all current liabilites if the come
+                due immediately. """
+
         cash=self.balance_sheet.loc["Cash and cash equivalents", self.balance_sheet.columns[-1]]
         short_term_invest = self.balance_sheet.loc["Short-term investments", self.balance_sheet.columns[-1]]
         current_receivables = self.balance_sheet.loc["Receivables", self.balance_sheet.columns[-1]]
@@ -93,6 +104,10 @@ class Stock:
 
     #interest coverage ratio
     def time_interest_earned_ratio(self):
+        """Returns the time interest earned or interest converage ratio of a stock.
+
+           Use: Measues the number of times operating income can cover interest expense."""
+
         operating_income = self.income_sheet.loc["Operating income", self.income_sheet.columns[-2]] #want the latest annula year
         interest_expense = self.income_sheet.loc["Interest Expense", self.income_sheet.columns[-2]]
 
@@ -101,6 +116,10 @@ class Stock:
 
     #problem, gross margin
     def gross_profit_percentage(self):
+        """Returns the gross profit percentage of a stock.
+
+           Use: The percentage if a profit makes before operating cost is subtracted."""
+
         gross_profit = self.income_sheet.loc["Gross profit", self.income_sheet.columns[-2]]
         revenue = self.income_sheet.loc["Revenue", self.income_sheet.columns[-2]]
 
@@ -109,6 +128,11 @@ class Stock:
 
     #operating proft margin, return on sales
     def operating_income_percentage(self):
+        """Returns the operating income percentage of a stock.
+
+           Use: Shows the percentage of profit earned from each dollar in the company's
+                core business, after operating costs have been subtracted."""
+
         operating_income = self.income_sheet.loc["Operating income", self.income_sheet.columns[-2]]
         revenue = self.income_sheet.loc["Revenue", self.income_sheet.columns[-2]]
 
@@ -117,6 +141,10 @@ class Stock:
 
     #net profit margin as well
     def return_on_net_sales(self):
+        """Retuns the return of net sales of a stock.
+
+           Use: Shows the percentage of each sales dollar earned as net income."""
+
         net_income = self.income_sheet.loc["Net income", self.income_sheet.columns[-2]]
         revenue = self.income_sheet.loc["Revenue", self.income_sheet.columns[-2]]
 
@@ -124,6 +152,11 @@ class Stock:
         return ratio
 
     def leverage_ratio(self):
+        """Returns the leverage ratio or equity multiplier of a stock.
+
+           Use: How much capital comes the the form of debt or assesses the ability
+                of a company to meets its financial obligations."""
+
         average_total = (self.balance_sheet.loc["Total assets", self.balance_sheet.columns[-1]]+
                          self.balance_sheet.loc["Total assets", self.balance_sheet.columns[-2]])/2
         average_equity = (self.balance_sheet.loc["Additional paid-in capital",self.balance_sheet.columns[-1]]+
@@ -134,6 +167,11 @@ class Stock:
 
 
     def roe(self):
+        """Returns the return on equity of a stock.
+
+           Use: Measues how much income is earned for every dolllar invested by
+                the company's shareholders."""
+
         net_income = self.income_sheet.loc["Net income", self.income_sheet.columns[-2]]
         shareholder_equity = self.balance_sheet.loc["Total stockholders' equity", self.balance_sheet.columns[-1]]
 
@@ -143,10 +181,8 @@ class Stock:
     #def eps(self):
         #net_income = self.income_sheet.loc["Net income", self.income_sheet.columns[-2]]
 
-
-
-
     def print_ratios(self):
+        """Outputs the all the above ratios of a stock."""
 
         name_value = {"Current Ratio: ": self.current_ratio(), "Debt Ratio: ": self.quick_ratio(),
                        "Time-interest-earned-ratio: ": self.time_interest_earned_ratio(),
