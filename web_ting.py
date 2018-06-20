@@ -1,4 +1,4 @@
-from urllib.request import urlopen as uReq
+from urllib.request import urlopen
 from bs4 import BeautifulSoup as soup
 import pandas as pd
 import re
@@ -13,7 +13,7 @@ def sheets_links(ticker):
 
 def sheet_frame(url):
     #opening and reading the web page
-    uClinet = uReq(url)
+    uClinet = urlopen(url)
     url_html = uClinet.read()
     uClinet.close()
 
@@ -94,6 +94,31 @@ def dataFrame_(lst):
     df = pd.DataFrame(format_data, index = index, columns = dates)
 
     return df
-amzn_data = sheet_frame("https://www.nasdaq.com/symbol/amzn/financials?query=income-statement")
-amzn_df = dataFrame_(amzn_data)
-print(amzn_df)
+
+
+rachel = sheet_frame("https://www.nasdaq.com/symbol/amzn/financials?query=income-statement")
+dole = sheet_frame("https://www.nasdaq.com/symbol/amzn/financials?query=balance-sheet")
+jacob = sheet_frame("https://www.nasdaq.com/symbol/amzn/financials?query=cash-flow")
+cathy = dataFrame_(rachel)
+lukas = dataFrame_(jacob)
+adrian = dataFrame_(dole)
+print(cathy)
+print(lukas)
+print(adrian)
+
+
+
+"""
+def frame_sheets(ticker):
+    fs = []
+    links = sheets_links(ticker)
+
+    for link in links:
+        table = sheet_frame(link)
+        fs_ = dataFrame_(table)
+        fs.append(fs)
+
+    return fs
+
+rachel = frame_sheets("amzn")
+"""
