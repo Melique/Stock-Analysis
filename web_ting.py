@@ -1,3 +1,11 @@
+"""
+TODO:
+-Documentation
+-Error handeling or let stock deal with it
+-Consisteny
+-general function
+-try to make it faster and robust
+"""
 from urllib.request import urlopen
 from bs4 import BeautifulSoup as soup
 import pandas as pd
@@ -5,6 +13,7 @@ import re
 
 def sheets_links(ticker):
     income = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=income-statement"
+    #https://www.nasdaq.com/symbol/amzn/financials?query=income-statement
     balance = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=balance-sheet"
     cash_flow = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=cash-flow"
 
@@ -61,7 +70,6 @@ def dataFrame_(lst):
     content = lst[1]
 
     index = []
-    row_length = 0
     data = []
     format_data = []
 
@@ -89,25 +97,29 @@ def dataFrame_(lst):
 
         format_data.append(temp)
 
-    row_len = len(index)
-
     df = pd.DataFrame(format_data, index = index, columns = dates)
 
     return df
 
+#rachel = sheets_links("amzn")
+#tim = sheet_frame(rachel[2])
+#dole = dataFrame_(tim)
+#print(dole)
 
-rachel = sheet_frame("https://www.nasdaq.com/symbol/amzn/financials?query=income-statement")
-dole = sheet_frame("https://www.nasdaq.com/symbol/amzn/financials?query=balance-sheet")
-jacob = sheet_frame("https://www.nasdaq.com/symbol/amzn/financials?query=cash-flow")
-cathy = dataFrame_(rachel)
-lukas = dataFrame_(jacob)
-adrian = dataFrame_(dole)
-print(cathy)
-print(lukas)
-print(adrian)
+def general(ticker):
+    dfs = []
+    links = sheets_links(ticker)
 
+    for link in links:
+        temp = sheet_frame(link)
+        df = dataFrame_(temp)
+        dfs.append(df)
 
-
+    return dfs
+rachel = general("amzn")
+print(rachel[0])
+print(rachel[1])
+print(rachel[2])
 """
 def frame_sheets(ticker):
     fs = []
