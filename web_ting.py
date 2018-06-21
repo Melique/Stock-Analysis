@@ -5,6 +5,7 @@ TODO:
 -Consisteny
 -general function
 -try to make it faster and robust
+-add to level varibles for html sources
 """
 from urllib.request import urlopen
 from bs4 import BeautifulSoup as soup
@@ -13,7 +14,6 @@ import re
 
 def sheets_links(ticker):
     income = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=income-statement"
-    #https://www.nasdaq.com/symbol/amzn/financials?query=income-statement
     balance = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=balance-sheet"
     cash_flow = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=cash-flow"
 
@@ -65,6 +65,19 @@ def sheet_frame(url):
 
     return [dates, content]
 
+def get_price(ticker):
+    url_price = "https://www.nasdaq.com/symbol/" + ticker + "/financials"
+    uClient = urlopen(url_price)
+    url_html = uClient.read()
+    uClient.close()
+
+    my_soup = soup(url_html, "html.parser")
+
+    price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
+    price = price.replace("$", "")
+    price = price.replace(",", "")
+
+    return float(price)
 def dataFrame_(lst):
     dates = lst[0]
     content = lst[1]
@@ -101,11 +114,6 @@ def dataFrame_(lst):
 
     return df
 
-#rachel = sheets_links("amzn")
-#tim = sheet_frame(rachel[2])
-#dole = dataFrame_(tim)
-#print(dole)
-
 def general(ticker):
     dfs = []
     links = sheets_links(ticker)
@@ -116,21 +124,3 @@ def general(ticker):
         dfs.append(df)
 
     return dfs
-rachel = general("amzn")
-print(rachel[0])
-print(rachel[1])
-print(rachel[2])
-"""
-def frame_sheets(ticker):
-    fs = []
-    links = sheets_links(ticker)
-
-    for link in links:
-        table = sheet_frame(link)
-        fs_ = dataFrame_(table)
-        fs.append(fs)
-
-    return fs
-
-rachel = frame_sheets("amzn")
-"""
