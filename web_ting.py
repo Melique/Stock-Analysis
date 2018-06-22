@@ -1,9 +1,7 @@
 """
 TODO:
 -Documentation
--Error handeling or let stock deal with it
 -Consisteny
--general function
 -try to make it faster and robust
 -add to level varibles for html sources
 """
@@ -12,15 +10,21 @@ from bs4 import BeautifulSoup as soup
 import pandas as pd
 import re
 
-def sheets_links(ticker):
-    income = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=income-statement"
-    balance = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=balance-sheet"
-    cash_flow = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=cash-flow"
+def sheets_link(ticker):
+    """Returns a list with 3 strings representing the 3 financial sheets."""
 
-    sheets = [income, balance, cash_flow]
+    income_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=income-statement"
+    balance_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=balance-sheet"
+    cash_flow_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=cash-flow"
+
+    sheets = [income_sheet, balance_sheet, cash_flow_sheet]
+
     return sheets
 
-def sheet_frame(url):
+def html_data(url):
+    """Opens and reads the html content of the url. Then parses the content to
+       return the column headers of the table and the data with the table in a list."""
+
     #opening and reading the web page
     uClinet = urlopen(url)
     url_html = uClinet.read()
@@ -32,9 +36,6 @@ def sheet_frame(url):
     #finding the data table
     table_data = my_soup.findAll("div", {"class":"genTable"})[0]
 
-    #name of the sheet. Needs fixing
-    name_raw = table_data.h3.text.strip()
-
     #finding the dates columns. Will used for the DF header
     dates = []
     table_headers = table_data.findAll("th")
@@ -43,6 +44,7 @@ def sheet_frame(url):
         temp = re.search(r'(\d+/\d+/\d+)', header.string)
         if temp:
             dates.append(temp.group(0))
+
     #finds the content in each row of table_data
     table_rows = table_data.findAll("tr")
     content = []
@@ -65,20 +67,9 @@ def sheet_frame(url):
 
     return [dates, content]
 
-def get_price(ticker):
-    url_price = "https://www.nasdaq.com/symbol/" + ticker + "/financials"
-    uClient = urlopen(url_price)
-    url_html = uClient.read()
-    uClient.close()
+def convert_to_DF(lst):
+    """Takes in the list return from sheet_frame and returns a DataFrame of the list content."""
 
-    my_soup = soup(url_html, "html.parser")
-
-    price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
-    price = price.replace("$", "")
-    price = price.replace(",", "")
-
-    return float(price)
-def dataFrame_(lst):
     dates = lst[0]
     content = lst[1]
 
@@ -114,13 +105,30 @@ def dataFrame_(lst):
 
     return df
 
-def general(ticker):
+def get_sheets(ticker):
+    """Returns the 3 financial sheets of ticker in a list."""
     dfs = []
-    links = sheets_links(ticker)
+    links = sheets_link(ticker)
 
     for link in links:
-        temp = sheet_frame(link)
-        df = dataFrame_(temp)
+        temp = html_data(link)
+        df = convert_to_DF(temp)
         dfs.append(df)
 
     return dfs
+
+def get_price(ticker):
+    """Returns the price of ticker."""
+
+    url_price = "https://www.nasdaq.com/symbol/" + ticker + "/financials"
+    uClient = urlopen(url_price)
+    url_html = uClient.read()
+    uClient.close()
+
+    my_soup = soup(url_html, "html.parser")
+
+    price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
+    price = price.replace("$", "")
+    price = price.replace(",", "")
+
+    return float(price)
