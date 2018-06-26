@@ -6,6 +6,7 @@ TODO:
 -add to level varibles for html sources
 """
 from urllib.request import urlopen
+import requests
 from bs4 import BeautifulSoup as soup
 import pandas as pd
 import re
@@ -26,15 +27,20 @@ def html_data(url):
        return the column headers of the table and the data with the table in a list."""
 
     #opening and reading the web page
-    uClinet = urlopen(url)
-    url_html = uClinet.read()
-    uClinet.close()
+    headers = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'}
+    resp = requests.get(url)
+    url_html = resp.text
+
+    #uClinet = urlopen(url)
+    #url_html = uClinet.read()
+    #uClinet.close()
 
     #convert to a soup object
     my_soup = soup(url_html, "html.parser")
 
     #finding the data table
-    table_data = my_soup.findAll("div", {"class":"genTable"})[0]
+    #table_data = my_soup.findAll("div", {"class":"genTable"})[0]
+    table_data = my_soup.find("div", {"class":"genTable"})
 
     #finding the dates columns. Will used for the DF header
     dates = []
