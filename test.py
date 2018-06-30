@@ -14,11 +14,13 @@ if __name__ == "__main__":
     t1 = time.time()
     amzn = stock_web.Stock("amzn")
     amzn.print_ratios()
+    print(amzn.price)
     print("\nTime taken: " + str(time.time()-t1))
 
     t2 = time.time()
     td = stock_web.Stock("td")
     td.print_ratios()
+    print(td.price)
     print("\nTime taken: " + str(time.time()-t2))
 
 

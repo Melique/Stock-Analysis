@@ -37,6 +37,7 @@ class Stock:
             income_soup = web_ting.parser(html_data[0])
             balance_soup = web_ting.parser(html_data[1])
             cash_soup = web_ting.parser(html_data[2])
+            price_soup  = web_ting.get_price(html_data[3])
 
             p.close()
             p.join()
@@ -45,7 +46,7 @@ class Stock:
             self.income_sheet = web_ting.convert_to_DF(income_soup)
             self.balance_sheet = web_ting.convert_to_DF(balance_soup)
             self.cash_flow_sheet = web_ting.convert_to_DF(cash_soup)
-            self.price = web_ting.get_price(ticker)
+            self.price = price_soup
 
     def current_ratio(self):
         """Returns the current ratio of a stock.

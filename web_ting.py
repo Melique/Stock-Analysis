@@ -5,7 +5,6 @@ TODO:
 -try to make it faster and robust
 -add to level varibles for html sources
 """
-#from urllib.request import urlopen
 import requests
 from bs4 import BeautifulSoup as soup
 import pandas as pd
@@ -18,8 +17,9 @@ def sheets_link(ticker):
     income_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=income-statement"
     balance_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=balance-sheet"
     cash_flow_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=cash-flow"
+    price = "https://www.nasdaq.com/symbol/" + ticker + "/financials"
 
-    sheets = [income_sheet, balance_sheet, cash_flow_sheet]
+    sheets = [income_sheet, balance_sheet, cash_flow_sheet, price]
 
     return sheets
 
@@ -33,8 +33,7 @@ def parser(html):
 
     my_soup = soup(html, "html.parser")
 
-    #finding the data table
-    #table_data = my_soup.findAll("div", {"class":"genTable"})[0]
+
     table_data = my_soup.find("div", {"class":"genTable"})
 
     #finding the dates columns. Will used for the DF header
@@ -106,43 +105,10 @@ def convert_to_DF(lst):
 
     return df
 
-# def get_sheets(ticker):
-#     """Returns the 3 financial sheets of ticker in a list"""
-#
-#     links = sheets_link(ticker)
-#
-#     open = Pool()
-#     html_data = open.map(requests.get, links)
-#     html_data.close()
-#     html_data.join()
-#
-#     income_soup = parser(html_data[0])
-#     balance_soup = parser(html_data[1])
-#     cash_soup = parser(html_data[2])
-#
-#     income_df = convert_to_DF(income_soup)
-#     balance_df = convert_to_DF(balance_soup)
-#     cash_df = convert_to_DF(cash_soup)
-#
-#     return [income_df, balance_df, cash_df]
-#
-#
-#     # for link in links:
-#     #     temp = html_data(link)
-#     #     df = convert_to_DF(temp)
-#     #     dfs.append(df)
-#     #
-#     # return dfs
-
-
-def get_price(ticker):
+def get_price(html):
     """Returns the price of ticker."""
 
-    url_price = "https://www.nasdaq.com/symbol/" + ticker + "/financials"
-    uClient = requests.get(url_price)
-    url_html = uClient.text
-
-    my_soup = soup(url_html, "html.parser")
+    my_soup = soup(html, "html.parser")
 
     price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
     price = price.replace("$", "")
