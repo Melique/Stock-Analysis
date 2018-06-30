@@ -25,7 +25,7 @@ class Stock:
                     access the ticker's information"""
         try:
 
-            links = web_ting.sheets_link(ticker)
+            links = web_ting.get_links(ticker)
 
         except pandas.errors.EmptyDataError:
             print("\"" + ticker + "\" is not valid or can't be found")
@@ -34,9 +34,9 @@ class Stock:
             p = Pool(size_pool)
             html_data = p.map(web_ting.read_data, links)
 
-            income_soup = web_ting.parser(html_data[0])
-            balance_soup = web_ting.parser(html_data[1])
-            cash_soup = web_ting.parser(html_data[2])
+            income_soup = web_ting.html_parser(html_data[0])
+            balance_soup = web_ting.html_parser(html_data[1])
+            cash_soup = web_ting.html_parser(html_data[2])
             price_soup  = web_ting.get_price(html_data[3])
 
             p.close()

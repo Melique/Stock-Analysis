@@ -9,10 +9,9 @@ import requests
 from bs4 import BeautifulSoup as soup
 import pandas as pd
 import re
-from multiprocessing import Pool
 
-def sheets_link(ticker):
-    """Returns a list with 3 strings representing the 3 financial sheets."""
+def get_links(ticker):
+    """Returns a list with 4 strings representing the 3 financial sheets and stock price."""
 
     income_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=income-statement"
     balance_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=balance-sheet"
@@ -24,15 +23,14 @@ def sheets_link(ticker):
     return sheets
 
 def read_data(url):
+    """Returns html data as a string. """
     url = requests.get(url)
     return url.text
 
-def parser(html):
-    """Opens and reads the html content of the url. Then parses the content to
-       return the column headers of the table and the data with the table in a list."""
+def html_parser(html):
+    """Parses html to return the column headers of the table and the data with the table in a list."""
 
     my_soup = soup(html, "html.parser")
-
 
     table_data = my_soup.find("div", {"class":"genTable"})
 
@@ -68,7 +66,7 @@ def parser(html):
     return [dates, content]
 
 def convert_to_DF(lst):
-    """Takes in the list return from sheet_frame and returns a DataFrame of the list content."""
+    """Returns the elements in lst as DataFrames."""
 
     dates = lst[0]
     content = lst[1]
