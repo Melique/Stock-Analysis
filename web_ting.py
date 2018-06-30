@@ -5,11 +5,12 @@ TODO:
 -try to make it faster and robust
 -add to level varibles for html sources
 """
-from urllib.request import urlopen
+#from urllib.request import urlopen
 import requests
 from bs4 import BeautifulSoup as soup
 import pandas as pd
 import re
+from multiprocessing import Pool
 
 def sheets_link(ticker):
     """Returns a list with 3 strings representing the 3 financial sheets."""
@@ -22,21 +23,15 @@ def sheets_link(ticker):
 
     return sheets
 
-def html_data(url):
+def read_data(url):
+    url = requests.get(url)
+    return url.text
+
+def parser(html):
     """Opens and reads the html content of the url. Then parses the content to
        return the column headers of the table and the data with the table in a list."""
 
-    #opening and reading the web page
-    headers = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'}
-    resp = requests.get(url)
-    url_html = resp.text
-
-    #uClinet = urlopen(url)
-    #url_html = uClinet.read()
-    #uClinet.close()
-
-    #convert to a soup object
-    my_soup = soup(url_html, "html.parser")
+    my_soup = soup(html, "html.parser")
 
     #finding the data table
     #table_data = my_soup.findAll("div", {"class":"genTable"})[0]
@@ -111,25 +106,41 @@ def convert_to_DF(lst):
 
     return df
 
-def get_sheets(ticker):
-    """Returns the 3 financial sheets of ticker in a list."""
-    dfs = []
-    links = sheets_link(ticker)
+# def get_sheets(ticker):
+#     """Returns the 3 financial sheets of ticker in a list"""
+#
+#     links = sheets_link(ticker)
+#
+#     open = Pool()
+#     html_data = open.map(requests.get, links)
+#     html_data.close()
+#     html_data.join()
+#
+#     income_soup = parser(html_data[0])
+#     balance_soup = parser(html_data[1])
+#     cash_soup = parser(html_data[2])
+#
+#     income_df = convert_to_DF(income_soup)
+#     balance_df = convert_to_DF(balance_soup)
+#     cash_df = convert_to_DF(cash_soup)
+#
+#     return [income_df, balance_df, cash_df]
+#
+#
+#     # for link in links:
+#     #     temp = html_data(link)
+#     #     df = convert_to_DF(temp)
+#     #     dfs.append(df)
+#     #
+#     # return dfs
 
-    for link in links:
-        temp = html_data(link)
-        df = convert_to_DF(temp)
-        dfs.append(df)
-
-    return dfs
 
 def get_price(ticker):
     """Returns the price of ticker."""
 
     url_price = "https://www.nasdaq.com/symbol/" + ticker + "/financials"
-    uClient = urlopen(url_price)
-    url_html = uClient.read()
-    uClient.close()
+    uClient = requests.get(url_price)
+    url_html = uClient.text
 
     my_soup = soup(url_html, "html.parser")
 

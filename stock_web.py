@@ -1,4 +1,11 @@
+"""
+TODO:
+-
+"""
+import requests
 import web_ting
+import pandas
+from multiprocessing import Pool
 
 class Stock:
     """This class provides attributes and methods getting and analzying
@@ -17,22 +24,27 @@ class Stock:
             Raises: pandas.errors.EmptyDataError: An error occurred trying to
                     access the ticker's information"""
         try:
-            sheets = web_ting.get_sheets(ticker)
+
+            links = web_ting.sheets_link(ticker)
 
         except pandas.errors.EmptyDataError:
             print("\"" + ticker + "\" is not valid or can't be found")
-
-        except NameError:
-            print("name Error")
-
-        except Exception:
-            print("idk call Rachel")
-
         else:
+            size_pool = len(links)
+            p = Pool(size_pool)
+            html_data = p.map(web_ting.read_data, links)
+
+            income_soup = web_ting.parser(html_data[0])
+            balance_soup = web_ting.parser(html_data[1])
+            cash_soup = web_ting.parser(html_data[2])
+
+            p.close()
+            p.join()
+
             self.name = ticker
-            self.income_sheet = sheets[0]
-            self.balance_sheet = sheets[1]
-            self.cash_flow_sheet = sheets[2]
+            self.income_sheet = web_ting.convert_to_DF(income_soup)
+            self.balance_sheet = web_ting.convert_to_DF(balance_soup)
+            self.cash_flow_sheet = web_ting.convert_to_DF(cash_soup)
             self.price = web_ting.get_price(ticker)
 
     def current_ratio(self):
