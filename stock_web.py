@@ -1,8 +1,9 @@
 """
 TODO:
--
+-Add and fix ratios
+-more analysis for price
+-cash flow analysis
 """
-import requests
 import web_ting
 import pandas
 from multiprocessing import Pool

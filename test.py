@@ -1,10 +1,7 @@
 """
-Notes:
--the api seems to be blocking you
---keep requesting
---wait a certian time before each request
---switch to webscraping
---dont use morning star
+General Notes:
+-add historical data/graphing, news?
+-try anything to make it faster
 """
 import pandas
 import stock_web
