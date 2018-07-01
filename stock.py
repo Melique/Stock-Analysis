@@ -3,6 +3,7 @@ TODO:
 -Add and fix ratios
 -more analysis for price
 -cash flow analysis
+-firgure out common share, dividens, etc
 """
 import webscrap_back
 import pandas
@@ -157,6 +158,38 @@ class Stock:
             ratio = net_income/revenue
             return ratio
 
+    def assest_turnover(self):
+        """Returns the asset turnover of a stock.
+
+           Use: Measues the amount of net slaes generated for each dollar invested
+                in assets."""
+
+        try:
+            net_sales = self.income_sheet.loc["Total Revenue", self.income_sheet.columns[0]]
+            average_total = (self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[0]]+
+                             self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[1]])/2
+        except KeyError:
+            return("idk ask Rachel")
+        else:
+            ratio = net_sales/average_total
+            return ratio
+
+    def return_total_assets(self):
+        """Returns the profitabliy of a company's asssets."""
+
+        try:
+            net_income = self.income_sheet.loc["Net income", self.income_sheet.columns[0]]
+            average_total = (self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[0]]+
+                             self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[1]])/2
+
+        except KeyError:
+            return("idk ask Rachel")
+
+        else:
+            ratio = net_income/average_total
+            return ratio
+
+
     def leverage_ratio(self):
         """Returns the leverage ratio or equity multiplier of a stock.
 
@@ -174,19 +207,21 @@ class Stock:
             ratio = average_total/average_equity
             return ratio
 
-    def roe(self):
-        """Returns the return on equity of a stock.
+    # def roe(self):
+    #     """Returns the return on equity of a stock.
+    #
+    #        Use: Measues how much income is earned for every dolllar invested by
+    #             the company's shareholders."""
+    #     try:
+    #         net_income = self.income_sheet.loc["Net Income", self.income_sheet.columns[0]]
+    #         shareholder_equity = self.balance_sheet.loc["Total Equity", self.balance_sheet.columns[0]]
+    #     except KeyError:
+    #         return("idk ask Rachel")
+    #     else:
+    #         ratio = net_income/shareholder_equity
+    #         return ratio
 
-           Use: Measues how much income is earned for every dolllar invested by
-                the company's shareholders."""
-        try:
-            net_income = self.income_sheet.loc["Net Income", self.income_sheet.columns[0]]
-            shareholder_equity = self.balance_sheet.loc["Total Equity", self.balance_sheet.columns[0]]
-        except KeyError:
-            return("idk ask Rachel")
-        else:
-            ratio = net_income/shareholder_equity
-            return ratio
+
 
     def print_ratios(self):
         """Outputs the all the above ratios of a stock."""
