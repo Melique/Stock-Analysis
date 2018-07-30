@@ -7,6 +7,7 @@ TODO:
 """
 import webscrap_back
 import pandas
+import statistics
 from multiprocessing import Pool
 
 class Stock:
@@ -31,24 +32,26 @@ class Stock:
 
         except pandas.errors.EmptyDataError:
             print("\"" + ticker + "\" is not valid or can't be found")
+        except TypeError:
+            print("\"" + ticker + "\" is not valid or can't be found")
         else:
             size_pool = len(links)
             p = Pool(size_pool)
             html_data = p.map(webscrap_back.read_data, links)
+            p.close()
+            p.join()
 
             income_soup = webscrap_back.html_parser(html_data[0])
             balance_soup = webscrap_back.html_parser(html_data[1])
             cash_soup = webscrap_back.html_parser(html_data[2])
             price_soup  = webscrap_back.get_price(html_data[3])
 
-            p.close()
-            p.join()
-
             self.name = ticker
             self.income_sheet = webscrap_back.convert_to_DF(income_soup)
             self.balance_sheet = webscrap_back.convert_to_DF(balance_soup)
             self.cash_flow_sheet = webscrap_back.convert_to_DF(cash_soup)
             self.price = price_soup
+            self.hist_data = webscrap_back.get_hist_data(self.name)
 
     def current_ratio(self):
         """Returns the current ratio of a stock.
@@ -232,8 +235,36 @@ class Stock:
                        "Gross Profit Margin: ": self.gross_profit_percentage(),
                        "Operating income margin: ": self.operating_income_percentage(),
                        "Return on net sales: ": self.return_on_net_sales(),
-                       "Leverage Ratio: ": self.leverage_ratio(), "Return on equity: ":self.roe()}
+                       "Leverage Ratio: ": self.leverage_ratio()}
 
         for key,value in name_value.items():
             #if value != "idk ask Rachel":
                 print(key,value)
+
+    def summary(self, lst, length):
+        """Retuns the mean, std. dev, five number summary, IQR, and range of lst."""
+        mid = int(length/2)
+        lst.sort()
+        my_mean = statistics.mean(lst)
+        my_median = statistics.median(lst)
+        my_min = lst[0]
+        my_max = lst[length-1]
+        my_q1 = statistics.median(lst[:mid+1]) if length % 2 else statistics.median(lst[:mid])
+        my_q3 = statistics.median(lst[mid:]) if length % 2 else statistics.median(lst[mid+1:])
+        my_range = abs(my_max-my_min)
+        my_iqr = my_q3-my_q1
+        my_dev = statistics.stdev(lst)
+
+        return [my_mean, my_dev, my_min, my_q1, my_median, my_q3, my_max, my_iqr, my_range]
+
+    def print_summaries(self):
+        """Prints out a formatted summary of all columns in self.hist_data."""
+        labels = self.hist_data.columns
+        length = len(self.hist_data[labels[0]])
+        label_stat = ["Mean: ","Std. Dev: ", "Min: ", "Q1: ", "Median: ", "Q3: ", "Max: ", "IQR: ", "Range: "]
+        for label in labels:
+            print(self.name + " " + label + ":")
+            temp_summ = self.summary(self.hist_data[label].tolist(), length)
+            for i in range(len(label_stat)):
+                print("\t" ,label_stat[i] ,temp_summ[i])
+            print("\n")

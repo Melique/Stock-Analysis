@@ -8,7 +8,10 @@ TODO:
 import requests
 from bs4 import BeautifulSoup as soup
 import pandas as pd
+import pandas_datareader.data as web
 import re
+import time
+import datetime
 
 def get_links(ticker):
     """Returns a list with 4 strings representing the 3 financial sheets and stock price."""
@@ -24,6 +27,7 @@ def get_links(ticker):
 
 def read_data(url):
     """Returns html data as a string. """
+
     url = requests.get(url)
     return url.text
 
@@ -62,7 +66,6 @@ def html_parser(html):
 
     #not needed
     content.remove(['Period Ending:'])
-
     return [dates, content]
 
 def convert_to_DF(lst):
@@ -106,6 +109,7 @@ def convert_to_DF(lst):
 def get_price(html):
     """Returns the price of ticker."""
 
+
     my_soup = soup(html, "html.parser")
 
     price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
@@ -113,3 +117,12 @@ def get_price(html):
     price = price.replace(",", "")
 
     return float(price)
+
+
+def get_hist_data(ticker):
+    """Returns 3 years of historical data of the ticker(data, close, volume, open, high, low)"""
+
+    now = datetime.date.today()
+    start = datetime.date(now.year -3, now.month, now.day)
+    hist_df = web.DataReader(ticker, "morningstar", start, now)
+    return hist_df
