@@ -46,13 +46,13 @@ class Stock:
             income_soup = webscrap_back.html_parser(html_data[0])
             balance_soup = webscrap_back.html_parser(html_data[1])
             cash_soup = webscrap_back.html_parser(html_data[2])
-            price_soup  = webscrap_back.get_price(html_data[3])
+            price_html  = webscrap_back.get_price(html_data[3])
 
             self.name = ticker
             self.income_sheet = webscrap_back.convert_to_DF(income_soup)
             self.balance_sheet = webscrap_back.convert_to_DF(balance_soup)
             self.cash_flow_sheet = webscrap_back.convert_to_DF(cash_soup)
-            self.price = price_soup
+            self.price = price_html
             self.hist_data = webscrap_back.get_hist_data(self.name)
 
     def current_ratio(self):

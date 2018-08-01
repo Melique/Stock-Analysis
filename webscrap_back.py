@@ -16,10 +16,10 @@ import datetime
 def get_links(ticker):
     """Returns a list with 4 strings representing the 3 financial sheets and stock price."""
 
-    income_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=income-statement"
-    balance_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=balance-sheet"
-    cash_flow_sheet = "https://www.nasdaq.com/symbol/" + ticker + "/financials?query=cash-flow"
-    price = "https://www.nasdaq.com/symbol/" + ticker + "/financials"
+    income_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=income-statement"
+    balance_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=balance-sheet"
+    cash_flow_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=cash-flow"
+    price = "https://www.nasdaq.com/symbol/fb/financials?query=ratios"
 
     sheets = [income_sheet, balance_sheet, cash_flow_sheet, price]
 
