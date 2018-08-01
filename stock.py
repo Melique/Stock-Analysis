@@ -27,7 +27,7 @@ class Stock:
             Raises: pandas.errors.EmptyDataError: An error occurred trying to
                     access the ticker's information"""
         try:
-
+            ticker = ticker.upper()
             links = webscrap_back.get_links(ticker)
 
         except pandas.errors.EmptyDataError:
@@ -255,16 +255,36 @@ class Stock:
         my_iqr = my_q3-my_q1
         my_dev = statistics.stdev(lst)
 
-        return [my_mean, my_dev, my_min, my_q1, my_median, my_q3, my_max, my_iqr, my_range]
+        return {"Mean": my_mean, "Stdev": my_dev, "Min":my_min, "Q1":my_q1,
+                "Median":my_median, "Q3":my_q3, "Max":my_max, "IQR":my_iqr, "Range":my_range}
 
     def print_summaries(self):
         """Prints out a formatted summary of all columns in self.hist_data."""
         labels = self.hist_data.columns
         length = len(self.hist_data[labels[0]])
-        label_stat = ["Mean: ","Std. Dev: ", "Min: ", "Q1: ", "Median: ", "Q3: ", "Max: ", "IQR: ", "Range: "]
+        #label_stat = ["Mean: ","Std. Dev: ", "Min: ", "Q1: ", "Median: ", "Q3: ", "Max: ", "IQR: ", "Range: "]
         for label in labels:
             print(self.name + " " + label + ":")
             temp_summ = self.summary(self.hist_data[label].tolist(), length)
-            for i in range(len(label_stat)):
-                print("\t" ,label_stat[i] ,temp_summ[i])
+            for key,value in temp_summ.items():
+                    print("\t",key, ": ",value)
+            # for i in range(len(label_stat)):
+            #     print("\t" ,label_stat[i] ,temp_summ[i])
             print("\n")
+
+    def tukey_outlier(self, lst, length):
+        """Finds the outliers in the lst by the Tukey method the Tukey method."""
+        K = 1.5
+        summ = self.summary(lst, length)
+        upper_range = summ["Q3"] + K*summ["IQR"]
+        lower_range = summ["Q1"] - K*summ["IQR"]
+        upper_outlier = []
+        lower_outlier = []
+
+        for i in range(length):
+            if lst[i] > upper_range:
+                upper_outlier.append(self.hist_data.loc[i, "date"])
+            elif lst[i] < lower_range:
+                lower_outlier.append(self.hist_data.loc[i, "date"])
+
+        return lower_outlier, upper_outlier

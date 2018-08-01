@@ -109,7 +109,6 @@ def convert_to_DF(lst):
 def get_price(html):
     """Returns the price of ticker."""
 
-
     my_soup = soup(html, "html.parser")
 
     price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
@@ -124,5 +123,10 @@ def get_hist_data(ticker):
 
     now = datetime.date.today()
     start = datetime.date(now.year -3, now.month, now.day)
-    hist_df = web.DataReader(ticker, "morningstar", start, now)
-    return hist_df
+    try:
+        hist_data = web.DataReader(ticker, "morningstar", start, now)
+    except Exception:
+        hist_data = web.DataReader(ticker, "iex", start, now)
+        hist_data = hist_data.reset_index()
+
+    return hist_data
