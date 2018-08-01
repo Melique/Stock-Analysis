@@ -273,7 +273,7 @@ class Stock:
             print("\n")
 
     def tukey_outlier(self, lst, length):
-        """Finds the outliers in the lst by the Tukey method the Tukey method."""
+        """Finds the outliers in lst by the Tukey method and returns the dates thet occurred."""
         K = 1.5
         summ = self.summary(lst, length)
         upper_range = summ["Q3"] + K*summ["IQR"]
@@ -287,4 +287,19 @@ class Stock:
             elif lst[i] < lower_range:
                 lower_outlier.append(self.hist_data.loc[i, "date"])
 
-        return lower_outlier, upper_outlier
+        return (lower_outlier, upper_outlier)
+
+    def std_outlier(self, lst, length):
+        """Finds the outliers in lst by st.Dev and returns the dates it occurred."""
+        summ = self.summary(lst,length)
+        D_STDEV = 2*summ["Stdev"]
+        upper_outlier = []
+        lower_outlier = []
+
+        for i in range(length):
+            if lst[i] > D_STDEV:
+                upper_outlier.append(self.hist_data.loc[i, "date"])
+            elif lst[i] < D_STDEV:
+                lower_outlier.append(self.hist_data.loc[i, "date"])
+
+            return (lower_outlier, upper_outlier)
