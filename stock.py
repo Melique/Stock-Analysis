@@ -19,6 +19,8 @@ class Stock:
             income_sheet: A dataframe of the income statement of the stock.
             balance_sheet: A dataframe of the balance sheet of the stock.
             cash_flow_sheet: A dataframe of the statement of cash flow of the stock.
+            price: The price of the ticker as a floats
+            hist_data: A dataframe containing 3 years of historical data for the stock.
     """
 
     def __init__(self, ticker):
@@ -243,6 +245,7 @@ class Stock:
 
     def summary(self, lst, length):
         """Retuns the mean, std. dev, five number summary, IQR, and range of lst."""
+
         mid = int(length/2)
         lst.sort()
         my_mean = statistics.mean(lst)
@@ -260,20 +263,21 @@ class Stock:
 
     def print_summaries(self):
         """Prints out a formatted summary of all columns in self.hist_data."""
+
         labels = self.hist_data.columns
         length = len(self.hist_data[labels[0]])
-        #label_stat = ["Mean: ","Std. Dev: ", "Min: ", "Q1: ", "Median: ", "Q3: ", "Max: ", "IQR: ", "Range: "]
+
         for label in labels:
             print(self.name + " " + label + ":")
             temp_summ = self.summary(self.hist_data[label].tolist(), length)
             for key,value in temp_summ.items():
                     print("\t",key, ": ",value)
-            # for i in range(len(label_stat)):
-            #     print("\t" ,label_stat[i] ,temp_summ[i])
+
             print("\n")
 
     def tukey_outlier(self, lst, length):
         """Finds the outliers in lst by the Tukey method and returns the dates thet occurred."""
+
         K = 1.5
         summ = self.summary(lst, length)
         upper_range = summ["Q3"] + K*summ["IQR"]
@@ -291,6 +295,7 @@ class Stock:
 
     def std_outlier(self, lst, length):
         """Finds the outliers in lst by st.Dev and returns the dates it occurred."""
+
         summ = self.summary(lst,length)
         D_STDEV = 2*summ["Stdev"]
         upper_outlier = []
