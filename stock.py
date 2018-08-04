@@ -267,9 +267,9 @@ class Stock:
         labels = self.hist_data.columns
         length = len(self.hist_data[labels[0]])
 
-        for label in labels:
+        for label in labels[1:]:
             print(self.name + " " + label + ":")
-            temp_summ = self.summary(self.hist_data[label].tolist(), length)
+            temp_summ = self.summary(self.hist_data.loc[:,label].tolist(), length)
             for key,value in temp_summ.items():
                     print("\t",key, ": ",value)
 

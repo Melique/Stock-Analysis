@@ -19,7 +19,7 @@ def get_links(ticker):
     income_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=income-statement"
     balance_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=balance-sheet"
     cash_flow_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=cash-flow"
-    price = "https://www.nasdaq.com/symbol/fb/financials?query=ratios"
+    price = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=ratios"
 
     sheets = [income_sheet, balance_sheet, cash_flow_sheet, price]
 
