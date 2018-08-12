@@ -43,17 +43,30 @@ class Stock:
             p.close()
             p.join()
 
-            income_soup = webscrap_back.html_parser(html_data[0])
-            balance_soup = webscrap_back.html_parser(html_data[1])
-            cash_soup = webscrap_back.html_parser(html_data[2])
-            price_html  = webscrap_back.get_price(html_data[3])
+            aincome_soup = webscrap_back.html_annual_parser(html_data[0])
+            abalance_soup = webscrap_back.html_annual_parser(html_data[1])
+            acash_soup = webscrap_back.html_annual_parser(html_data[2])
+            qincome_soup = webscrap_back.html_quarterly_parser(html_data[3])
+            qbalance_soup = webscrap_back.html_quarterly_parser(html_data[4])
+            qcash_soup = webscrap_back.html_quarterly_parser(html_data[5])
+            price_html  = webscrap_back.get_price(html_data[6])
 
             self.name = ticker
-            self.income_sheet = webscrap_back.convert_to_DF(income_soup)
-            self.balance_sheet = webscrap_back.convert_to_DF(balance_soup)
-            self.cash_flow_sheet = webscrap_back.convert_to_DF(cash_soup)
+
+            self.aincome_sheet = webscrap_back.convert_to_DF(aincome_soup)
+            self.abalance_sheet = webscrap_back.convert_to_DF(abalance_soup)
+            self.acash_flow_sheet = webscrap_back.convert_to_DF(acash_soup)
+            self.qincome_sheet = webscrap_back.convert_to_DF(qincome_soup)
+            self.qbalance_sheet = webscrap_back.convert_to_DF(qbalance_soup)
+            self.qcash_flow_sheet = webscrap_back.convert_to_DF(qcash_soup)
+
             self.price = price_html
             self.hist_data = webscrap_back.get_hist_data(self.name)
+
+    # def quick_info(self):
+    #     """Returns previous close, open,  volume, avg. volume, market cap, PE ratio, EPS"""
+    #
+    # def eps(self):
 
     def current_ratio(self):
         """Returns the current ratio of a stock.
