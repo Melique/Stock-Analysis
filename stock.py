@@ -4,11 +4,14 @@ TODO:
 -more analysis for price
 -cash flow analysis
 -firgure out common share, dividens, etc
+-NOTE: Numbers in 1000s
 """
 import webscrap_back
 import pandas
 import statistics
 from multiprocessing import Pool
+import time
+import datetime
 
 class Stock:
     """This class provides attributes and methods getting and analzying
@@ -49,7 +52,8 @@ class Stock:
             qincome_soup = webscrap_back.html_quarterly_parser(html_data[3])
             qbalance_soup = webscrap_back.html_quarterly_parser(html_data[4])
             qcash_soup = webscrap_back.html_quarterly_parser(html_data[5])
-            price_html  = webscrap_back.get_price(html_data[6])
+            price  = webscrap_back.get_price(html_data[6])
+            eps = webscrap_back.get_eps(html_data[7])
 
             self.name = ticker
 
@@ -60,13 +64,17 @@ class Stock:
             self.qbalance_sheet = webscrap_back.convert_to_DF(qbalance_soup)
             self.qcash_flow_sheet = webscrap_back.convert_to_DF(qcash_soup)
 
-            self.price = price_html
+            self.price = price
+            self.eps = eps
             self.hist_data = webscrap_back.get_hist_data(self.name)
 
-    # def quick_info(self):
-    #     """Returns previous close, open,  volume, avg. volume, market cap, PE ratio, EPS"""
+    # def pe_ratio(self):
+    #     """Returns the price-to-earnings ratio.
     #
-    # def eps(self):
+    #        Use: The price of $1 of earnings."""
+    #
+    #        eps = self.eps()
+    #        return self.price/eps
 
     def current_ratio(self):
         """Returns the current ratio of a stock.
@@ -77,8 +85,8 @@ class Stock:
         current_lib = 0.0
 
         try:
-            current_assets = self.balance_sheet.loc["Total Current Assets",self.balance_sheet.columns[0]]
-            current_lib = self.balance_sheet.loc["Total Current Liabilities", self.balance_sheet.columns[0]]
+            current_assets = self.abalance_sheet.loc["Total Current Assets",self.abalance_sheet.columns[0]]
+            current_lib = self.abalance_sheet.loc["Total Current Liabilities", self.abalance_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -94,8 +102,8 @@ class Stock:
         tot_lib = 0.0
 
         try:
-            tot_assets = self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[0]]
-            tot_lib = self.balance_sheet.loc["Total Liabilities", self.balance_sheet.columns[0]]
+            tot_assets = self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]
+            tot_lib = self.abalance_sheet.loc["Total Liabilities", self.abalance_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -109,10 +117,10 @@ class Stock:
                 due immediately. """
 
         try:
-            cash = self.balance_sheet.loc["Cash and Cash Equivalents", self.balance_sheet.columns[0]]
-            short_term_invest = self.balance_sheet.loc["Short-Term Investments", self.balance_sheet.columns[0]]
-            current_receivables = self.balance_sheet.loc["Net Receivables", self.balance_sheet.columns[0]]
-            current_lib = self.balance_sheet.loc["Total Current Liabilities", self.balance_sheet.columns[0]]
+            cash = self.abalance_sheet.loc["Cash and Cash Equivalents", self.abalance_sheet.columns[0]]
+            short_term_invest = self.abalance_sheet.loc["Short-Term Investments", self.abalance_sheet.columns[0]]
+            current_receivables = self.abalance_sheet.loc["Net Receivables", self.abalance_sheet.columns[0]]
+            current_lib = self.abalance_sheet.loc["Total Current Liabilities", self.abalance_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -126,8 +134,8 @@ class Stock:
 
         try:
             #want the latest year
-            operating_income = self.income_sheet.loc["Operating Income", self.income_sheet.columns[0]]
-            interest_expense = self.income_sheet.loc["Interest Expense", self.income_sheet.columns[0]]
+            operating_income = self.aincome_sheet.loc["Operating Income", self.aincome_sheet.columns[0]]
+            interest_expense = self.aincome_sheet.loc["Interest Expense", self.aincome_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -140,8 +148,8 @@ class Stock:
            Use: The percentage if a profit makes before operating cost is subtracted."""
 
         try:
-            gross_profit = self.income_sheet.loc["Gross Profit", self.income_sheet.columns[0]]
-            revenue = self.income_sheet.loc["Total Revenue", self.income_sheet.columns[0]]
+            gross_profit = self.aincome_sheet.loc["Gross Profit", self.aincome_sheet.columns[0]]
+            revenue = self.aincome_sheet.loc["Total Revenue", self.aincome_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -155,8 +163,8 @@ class Stock:
                 core business, after operating costs have been subtracted."""
 
         try:
-            operating_income = self.income_sheet.loc["Operating Income", self.income_sheet.columns[0]]
-            revenue = self.income_sheet.loc["Total Revenue", self.income_sheet.columns[0]]
+            operating_income = self.aincome_sheet.loc["Operating Income", self.aincome_sheet.columns[0]]
+            revenue = self.aincome_sheet.loc["Total Revenue", self.aincome_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -168,8 +176,8 @@ class Stock:
 
            Use: Shows the percentage of each sales dollar earned as net income."""
         try:
-            net_income = self.income_sheet.loc["Net income", self.income_sheet.columns[0]]
-            revenue = self.income_sheet.loc["Revenue", self.income_sheet.columns[0]]
+            net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
+            revenue = self.aincome_sheet.loc["Revenue", self.aincome_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -183,9 +191,9 @@ class Stock:
                 in assets."""
 
         try:
-            net_sales = self.income_sheet.loc["Total Revenue", self.income_sheet.columns[0]]
-            average_total = (self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[0]]+
-                             self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[1]])/2
+            net_sales = self.aincome_sheet.loc["Total Revenue", self.aincome_sheet.columns[0]]
+            average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
+                             self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -196,9 +204,9 @@ class Stock:
         """Returns the profitabliy of a company's asssets."""
 
         try:
-            net_income = self.income_sheet.loc["Net income", self.income_sheet.columns[0]]
-            average_total = (self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[0]]+
-                             self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[1]])/2
+            net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
+            average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
+                             self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
 
         except KeyError:
             return("idk ask Rachel")
@@ -215,10 +223,10 @@ class Stock:
                 of a company to meets its financial obligations."""
 
         try:
-            average_total = (self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[0]]+
-                             self.balance_sheet.loc["Total Assets", self.balance_sheet.columns[1]])/2
-            average_equity = (self.balance_sheet.loc["Common Stocks",self.balance_sheet.columns[0]]+
-                              self.balance_sheet.loc["Common Stocks",self.balance_sheet.columns[1]])/2
+            average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
+                             self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
+            average_equity = (self.abalance_sheet.loc["Common Stocks",self.abalance_sheet.columns[0]]+
+                              self.abalance_sheet.loc["Common Stocks",self.abalance_sheet.columns[1]])/2
         except KeyError:
             return("idk ask Rachel")
         else:
@@ -321,3 +329,40 @@ class Stock:
                 lower_outlier.append(self.hist_data.loc[i, "date"])
 
             return (lower_outlier, upper_outlier)
+
+
+    def high_52(self):
+        df = self.hist_data
+        df.set_index(self.hist_data.columns[0], inplace=True)
+        now = datetime.date.today()
+        past = datetime.date(now.year - 1, now.month, now.day)
+        now = str(now)
+        past = str(past)
+        year = df.loc[past:, df.columns[2]]
+        high = year.iloc[0]
+
+        for day in year:
+            if day > high:
+                high = day
+
+        return high
+
+    def low_52(self):
+        df = self.hist_data
+        df.set_index(self.hist_data.columns[0], inplace=True)
+        now = datetime.date.today()
+        past = datetime.date(now.year - 1, now.month, now.day)
+        now = str(now)
+        past = str(past)
+        year = df.loc[past:, df.columns[3]]
+        low = year.iloc[0]
+
+        for day in year:
+            if day < low:
+                low = day
+
+        return low
+
+    def market_cap(self):
+        out_shares = self.qbalance_sheet.loc["Common Stocks",self.qbalance_sheet.columns[0]]
+        return self.price*out_shares

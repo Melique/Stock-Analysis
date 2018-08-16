@@ -16,21 +16,22 @@ import datetime
 def get_links(ticker):
     """Returns a list with 4 strings representing the 3 financial sheets and stock price."""
 
-    aincome_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=income-statement"
-    abalance_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=balance-sheet"
-    acash_flow_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=cash-flow"
-    qincome_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=income-statement&data=quarterly"
-    qbalance_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=balance-sheet&data=quarterly"
-    qcash_flow_sheet = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=cash-flow&data=quarterly"
-    price = "https://www.nasdaq.com/symbol/"+ticker.lower()+"/financials?query=ratios"
+    aincome_sheet = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=income-statement"
+    abalance_sheet = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=balance-sheet"
+    acash_flow_sheet = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=cash-flow"
+    qincome_sheet = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=income-statement&data=quarterly"
+    qbalance_sheet = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=balance-sheet&data=quarterly"
+    qcash_flow_sheet = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=cash-flow&data=quarterly"
+    price = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=ratios"
+    eps = "https://www.nasdaq.com/symbol/" + ticker.lower()
 
     sheets = [aincome_sheet, abalance_sheet, acash_flow_sheet, qincome_sheet,
-     qbalance_sheet, qcash_flow_sheet, price];
+     qbalance_sheet, qcash_flow_sheet, price, eps];
 
     return sheets
 
 def read_data(url):
-    """Returns html data as a string. """
+    """Returns html data as a string."""
 
     url = requests.get(url)
     return url.text
@@ -168,16 +169,23 @@ def get_price(html):
 
     return float(price)
 
+def get_eps(html):
+    """Returns the earnings per share of ticker."""
+
+    my_soup = soup(html, "html.parser")
+    raw_data = my_soup.findAll("div", {"class":"table-cell"})
+    location = 29
+    eps_raw = raw_data[location]
+    eps = re.search(r"-?\d*\.\d*",eps_raw.string).group(0)
+
+    return float(eps)
 
 def get_hist_data(ticker):
     """Returns 3 years of historical data of the ticker(data, close, volume, open, high, low)"""
 
     now = datetime.date.today()
     start = datetime.date(now.year -3, now.month, now.day)
-    try:
-        hist_data = web.DataReader(ticker, "morningstar", start, now)
-    except Exception:
-        hist_data = web.DataReader(ticker, "iex", start, now)
-        hist_data = hist_data.reset_index()
+    hist_data = web.DataReader(ticker, "iex", start, now)
+    hist_data = hist_data.reset_index()
 
     return hist_data
