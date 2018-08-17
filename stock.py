@@ -15,19 +15,26 @@ import datetime
 
 class Stock:
     """This class provides attributes and methods getting and analzying
-        important accounting infomration.
+        important financial information.
 
         Attributes:
             name: A string for the name of the stock.
-            income_sheet: A dataframe of the income statement of the stock.
-            balance_sheet: A dataframe of the balance sheet of the stock.
-            cash_flow_sheet: A dataframe of the statement of cash flow of the stock.
+            aincome_sheet: A dataframe of the annual income statement of the stock.
+            abalance_sheet: A dataframe of the annual balance sheet of the stock.
+            acash_flow_sheet: A dataframe of the annual statement of cash flow of the stock.
+            qincome_sheet: A dataframe of the quarterly income statement of the stock.
+            qbalance_sheet: A dataframe of the quarterly balance sheet of the stock.
+            qcash_flow_sheet: A dataframe of the quarterly statement of cash flow of the stock.
             price: The price of the ticker as a floats
             hist_data: A dataframe containing 3 years of historical data for the stock.
+
+            Note: the elements in the dataframes are in 1000s
     """
 
     def __init__(self, ticker):
-        """Inits Stock with ticker name and the 3 financial sheets.
+        """Init Stock with ticker name and the 3 annual financial sheets, 3
+           quarterly financial sheets, price, earnings per share, and historical
+           data.
 
             Raises: pandas.errors.EmptyDataError: An error occurred trying to
                     access the ticker's information"""
@@ -68,78 +75,156 @@ class Stock:
             self.eps = eps
             self.hist_data = webscrap_back.get_hist_data(self.name)
 
-    # def pe_ratio(self):
-    #     """Returns the price-to-earnings ratio.
-    #
-    #        Use: The price of $1 of earnings."""
-    #
-    #        eps = self.eps()
-    #        return self.price/eps
+    """------------------------Price Ratios---------------------------------"""
+    def outstanding_shares(self):
+        """Return the outstanding shares of self.
 
-    def current_ratio(self):
-        """Returns the current ratio of a stock.
+           Use: outstanding shares is used for several financial ratios."""
 
-           Use: measures ability to pay current liabilites with current assets."""
+        net_income_label = "Net Income Applicable to Common Shareholders"
+        recent = self.aincome_sheet.columns[0]
+        shares = self.aincome_sheet.loc[net_income_label, recent]/self.eps
 
-        current_assets = 0.0
-        current_lib = 0.0
+        return shares
+
+    def pe_ratio(self):
+        """Returns the Price-to-Earnings Ratio of self.
+
+           Use: The market price of $1 of earnings."""
+
+       ratio = self.price/self.eps
+
+       return ratio
+
+    def sales_per_share(self):
+        """Returns annual Sales-Per-Share of self.
+
+           Use: Used for other financial ratios and it indictaes the company's
+           business activity strength. The higher the better."""
+
+       recent = self.ainocme_sheet.columns[0]
+       revenue = self.aincome_sheet.loc["Total Revenue",recent]
+       ratio = revenue/self.outstanding_shares()
+
+       return ratio
+
+    def price_sales_ratio(self):
+        """Returns Price-to-Sales Ratio of self.
+
+           Use: An indicator of the vale placed on each dollar of a company's sales
+           or revenues. In other words, the price you'll pay for $1 of sales."""
+
+       recent = self.ainocme_sheet.columns[0]
+       revenue = self.aincome_sheet.loc["Total Revenue",recent]
+       ratio = self.price / self.sales_per_share()
+
+       return ratio
+
+    def book_value(self):
+        """Returns the book value of self that is the value of self in the company's books.
+
+           Use: Indicates the recorded accounting amount for each share of common
+           stock outstanding."""
+
+       recent = self.abalance_sheet.columns[0]
+       total_equity = self.abalance_sheet["Net Income Applicable to Common Shareholders", recent]
+       ratio = total_equity/self.outstanding_shares()
+
+       return ratio
+
+    def price_book_ratio(self):
+        """Returns Price-to-Book Ratio of self.
+
+           Use: Indicates the number of dollars you'll pay for $1 of equity."""
+
+       ratio = self.price/self.book_value()
+
+       return ratio
+
+    def dividend(self):
+        """Returns total dividend of self.
+
+           Use: Used for several ratios."""
+
+       beg_date = self.abalance_sheet.columns[1]
+       beg = self.abalance_sheet.loc["Retained Earnings", beg_date]
+       end_date = self.abalance_sheet.columns[0]
+       end = self.abalance_sheet.loc["Retained Earnings", end_date]
+       recent = self.aincome_sheet.columns[0]
+       net_income = self.aincome_sheet.loc["Net Income Applicable to Common Shareholders", recent]
+
+       dividend = beg - end + net_income
+
+           return dividend
+
+    def dividend_yield(self):
+        """Returns dividend yield of self.
+
+           Use: Used to compare other other dividend-paying stocks."""
+
+       div_per_share = self.dividend()/self.outstanding_shares()
+       ratio = div_per_share/self.price
+
+       return ratio
+
+    def dividend_payout(self):
+        """Returns dividend payout of self.
+
+           Use: Indicates the percentage of earnings paid to shareholders in dividends."""
+
+       recent = self.aincome_sheet.columns[0]
+       net_income = self.aincome_sheet.loc["Net Income Applicable to Common Shareholders", recent]
+       ratio = self.dividend()/net_income
+
+       return ratio
+    """----------------------Profitability Ratios----------------------------"""
+
+    def return_total_assets(self):
+        """Returns the return on total assets of a company's asssets.
+
+           Use: Indicates how good the compant is at using its assets to make money."""
 
         try:
-            current_assets = self.abalance_sheet.loc["Total Current Assets",self.abalance_sheet.columns[0]]
-            current_lib = self.abalance_sheet.loc["Total Current Liabilities", self.abalance_sheet.columns[0]]
+            net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
+            average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
+                             self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
+
         except KeyError:
             return("idk ask Rachel")
+
         else:
-            current_ratio = current_assets/current_lib
-            return current_ratio
-
-    def debt_ratio(self):
-        """Retuns the debt ratio of a stock.
-
-           Use: Indicates percentage of assest financed with debt."""
-
-        tot_assets = 0.0
-        tot_lib = 0.0
-
-        try:
-            tot_assets = self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]
-            tot_lib = self.abalance_sheet.loc["Total Liabilities", self.abalance_sheet.columns[0]]
-        except KeyError:
-            return("idk ask Rachel")
-        else:
-            debt_ratio = tot_assets/tot_lib
-            return debt_ratio
-
-    def quick_ratio(self):
-        """Returns quick(acid-test) ratio of a stock.
-
-           Use: Shows the ability to pay all current liabilites if the come
-                due immediately. """
-
-        try:
-            cash = self.abalance_sheet.loc["Cash and Cash Equivalents", self.abalance_sheet.columns[0]]
-            short_term_invest = self.abalance_sheet.loc["Short-Term Investments", self.abalance_sheet.columns[0]]
-            current_receivables = self.abalance_sheet.loc["Net Receivables", self.abalance_sheet.columns[0]]
-            current_lib = self.abalance_sheet.loc["Total Current Liabilities", self.abalance_sheet.columns[0]]
-        except KeyError:
-            return("idk ask Rachel")
-        else:
-            ratio = (cash + short_term_invest + current_receivables)/current_lib
+            ratio = net_income/average_total
             return ratio
 
-    def time_interest_earned_ratio(self):
-        """Returns the time interest earned or interest converage ratio of a stock.
+    def return_on_equity(self):
+        """Returns the Return on Equity.
 
-           Use: Measues the number of times operating income can cover interest expense."""
+           Use: Indicates how effective the company is at turning the cash put
+           into the business into geater gains and growth for the comapny and investors."""
 
+           try:
+               net_income_label = "Net Income Applicable to Common Shareholders"
+               recent = self.aincome_sheet.columns[0]
+               net_income = self.aincome_sheet.loc[net_income_label, recent]
+               recent = self.abalance_sheet.columns[0]
+               equity = self.abalance_sheet.loc["Total Equity", recent]
+
+          except KeyError:
+            return(None);
+
+    # def profit_margin(self):
+
+    def return_on_net_sales(self):
+        """Returns the return of net sales of a stock.
+
+           Use: Shows the percentage of each sales dollar earned as net income."""
         try:
-            #want the latest year
-            operating_income = self.aincome_sheet.loc["Operating Income", self.aincome_sheet.columns[0]]
-            interest_expense = self.aincome_sheet.loc["Interest Expense", self.aincome_sheet.columns[0]]
+            net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
+            revenue = self.aincome_sheet.loc["Revenue", self.aincome_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
-            ratio = operating_income/interest_expense
+            ratio = net_income/revenue
             return ratio
 
     def gross_profit_percentage(self):
@@ -171,50 +256,41 @@ class Stock:
             ratio = (operating_income/revenue)*100
             return ratio
 
-    def return_on_net_sales(self):
-        """Returns the return of net sales of a stock.
+    """---------------------------Liquidity Ratios---------------------------"""
 
-           Use: Shows the percentage of each sales dollar earned as net income."""
+    def current_ratio(self):
+        """Returns the current ratio of a stock.
+
+           Use: measures ability to pay current liabilites with current assets."""
+
+        current_assets = 0.0
+        current_lib = 0.0
+
         try:
-            net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
-            revenue = self.aincome_sheet.loc["Revenue", self.aincome_sheet.columns[0]]
+            current_assets = self.abalance_sheet.loc["Total Current Assets",self.abalance_sheet.columns[0]]
+            current_lib = self.abalance_sheet.loc["Total Current Liabilities", self.abalance_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
-            ratio = net_income/revenue
-            return ratio
+            current_ratio = current_assets/current_lib
+            return current_ratio
 
-    def assest_turnover(self):
-        """Returns the asset turnover of a stock.
+    def quick_ratio(self):
+        """Returns quick(acid-test) ratio of a stock.
 
-           Use: Measues the amount of net slaes generated for each dollar invested
-                in assets."""
+           Use: Shows the ability to pay all current liabilites if the come
+                due immediately. """
 
         try:
-            net_sales = self.aincome_sheet.loc["Total Revenue", self.aincome_sheet.columns[0]]
-            average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
-                             self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
+            cash = self.abalance_sheet.loc["Cash and Cash Equivalents", self.abalance_sheet.columns[0]]
+            short_term_invest = self.abalance_sheet.loc["Short-Term Investments", self.abalance_sheet.columns[0]]
+            current_receivables = self.abalance_sheet.loc["Net Receivables", self.abalance_sheet.columns[0]]
+            current_lib = self.abalance_sheet.loc["Total Current Liabilities", self.abalance_sheet.columns[0]]
         except KeyError:
             return("idk ask Rachel")
         else:
-            ratio = net_sales/average_total
+            ratio = (cash + short_term_invest + current_receivables)/current_lib
             return ratio
-
-    def return_total_assets(self):
-        """Returns the profitabliy of a company's asssets."""
-
-        try:
-            net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
-            average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
-                             self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
-
-        except KeyError:
-            return("idk ask Rachel")
-
-        else:
-            ratio = net_income/average_total
-            return ratio
-
 
     def leverage_ratio(self):
         """Returns the leverage ratio or equity multiplier of a stock.
@@ -233,36 +309,88 @@ class Stock:
             ratio = average_total/average_equity
             return ratio
 
-    # def roe(self):
-    #     """Returns the return on equity of a stock.
-    #
-    #        Use: Measues how much income is earned for every dolllar invested by
-    #             the company's shareholders."""
-    #     try:
-    #         net_income = self.income_sheet.loc["Net Income", self.income_sheet.columns[0]]
-    #         shareholder_equity = self.balance_sheet.loc["Total Equity", self.balance_sheet.columns[0]]
-    #     except KeyError:
-    #         return("idk ask Rachel")
-    #     else:
-    #         ratio = net_income/shareholder_equity
-    #         return ratio
+    """-----------------------------Debt Ratios------------------------------"""
 
+    def debt_ratio(self):
+        """Retuns the debt ratio of a stock.
 
+           Use: Indicates percentage of assest financed with debt."""
+
+        tot_assets = 0.0
+        tot_lib = 0.0
+
+        try:
+            tot_assets = self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]
+            tot_lib = self.abalance_sheet.loc["Total Liabilities", self.abalance_sheet.columns[0]]
+        except KeyError:
+            return("idk ask Rachel")
+        else:
+            debt_ratio = tot_assets/tot_lib
+            return debt_ratio
+
+    def time_interest_earned_ratio(self):
+        """Returns the time interest earned or interest converage ratio of a stock.
+
+           Use: Measues the number of times operating income can cover interest expense."""
+
+        try:
+            #want the latest year
+            operating_income = self.aincome_sheet.loc["Operating Income", self.aincome_sheet.columns[0]]
+            interest_expense = self.aincome_sheet.loc["Interest Expense", self.aincome_sheet.columns[0]]
+        except KeyError:
+            return("idk ask Rachel")
+        else:
+            ratio = operating_income/interest_expense
+            return ratio
+
+    """---------------------------Efficiency Ratios---------------------------"""
+
+    def assest_turnover(self):
+        """Returns the asset turnover of a stock.
+
+           Use: Measues the amount of net slaes generated for each dollar invested
+                in assets."""
+
+        try:
+            net_sales = self.aincome_sheet.loc["Total Revenue", self.aincome_sheet.columns[0]]
+            average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
+                             self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
+        except KeyError:
+            return("idk ask Rachel")
+        else:
+            ratio = net_sales/average_total
+            return ratio
+
+    # def inventory_turnover(self):
+
+    """--------------------------Printing Functions--------------------------"""
 
     def print_ratios(self):
         """Outputs the all the above ratios of a stock."""
 
-        name_value = {"Current Ratio: ": self.current_ratio(), "Debt Ratio: ": self.quick_ratio(),
-                       "Quick ratio: ": self.quick_ratio(),
-                       "Time-interest-earned-ratio: ": self.time_interest_earned_ratio(),
-                       "Gross Profit Margin: ": self.gross_profit_percentage(),
-                       "Operating income margin: ": self.operating_income_percentage(),
-                       "Return on net sales: ": self.return_on_net_sales(),
-                       "Leverage Ratio: ": self.leverage_ratio()}
+        names = ["Outstanding Shares: ", "P/E Ratio: ", "Sales/Share: ", "P/S Ratio: ",
+                "Book Value: ", "Price/Book Ratio: ", "Total Dividend: ", "Dividend Yield: ",
+                "Dividend Payout: ", "ROA: ", "ROE: ", "Return on Net Sales: ", "Gross Profit Percentage: ",
+                "Operating Income Percentage: ", "Current Ratio: ", "Quick Ratio: ", "Leverage Ratio: ",
+                "Debt Ratio: ", "Time-interest-earned ratio: ", "Assest turnover: "]
 
-        for key,value in name_value.items():
-            #if value != "idk ask Rachel":
-                print(key,value)
+        functions = [self.outstanding_shares(), self.pe_ratio(), self.sales_per_share(),
+                     self.price_sales_ratio(), self.book_value(), self.dividend(),
+                     self.dividend_yield(), self.return_total_assets(), self.return_on_net_sales(),
+                     self.gross_profit_percentage(), self.operating_income_percentage(),
+                     self.current_ratio(), self.quick_ratio(), self.leverage_ratio(),
+                     self.debt_ratio(), self.time_interest_earned_ratio(), self.assest_turnover()]
+        length = len(names)
+
+        for i in range(length):
+            print(names[i], functions[i])
+
+    # def compare(stocks, functions):
+    #     #list of stock and functions
+    #
+    # def compare_sheets(stock, sheet):
+
+    """------------------------------Statistics------------------------------"""
 
     def summary(self, lst, length):
         """Retuns the mean, std. dev, five number summary, IQR, and range of lst."""

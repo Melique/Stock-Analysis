@@ -1,5 +1,6 @@
 """
 TODO:
+- Error handling 
 -Documentation
 -Consisteny
 -try to make it faster and robust
