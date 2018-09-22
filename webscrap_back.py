@@ -186,8 +186,12 @@ def get_eps(html):
 
     my_soup = soup(html, "html.parser")
     raw_data = my_soup.findAll("div", {"class":"table-cell"})
-    location = 29
-    eps_raw = raw_data[location]
+    location = 0
+    for item in raw_data:
+        if item.b:
+            if "Earnings Per Share (EPS)" in item.contents[1].contents[0]:
+                location = (raw_data.index(item))
+    eps_raw = raw_data[location+1]
     eps = re.search(r"-?\d*\.\d*",eps_raw.string)
 
     return float(eps.group(0)) if eps else None
