@@ -12,6 +12,7 @@ import statistics
 from multiprocessing import Pool
 import time
 import datetime
+from math import floor
 
 class Stock:
     """This class provides attributes and methods getting and analzying
@@ -64,12 +65,12 @@ class Stock:
 
             self.name = ticker
 
-            self.aincome_sheet = webscrap_back.convert_to_DF(aincome_soup)
-            self.abalance_sheet = webscrap_back.convert_to_DF(abalance_soup)
-            self.acash_flow_sheet = webscrap_back.convert_to_DF(acash_soup)
-            self.qincome_sheet = webscrap_back.convert_to_DF(qincome_soup)
-            self.qbalance_sheet = webscrap_back.convert_to_DF(qbalance_soup)
-            self.qcash_flow_sheet = webscrap_back.convert_to_DF(qcash_soup)
+            self.aincome_sheet = webscrap_back.convert_to_DF(aincome_soup) if aincome_soup else None
+            self.abalance_sheet = webscrap_back.convert_to_DF(abalance_soup) if abalance_soup else None
+            self.acash_flow_sheet = webscrap_back.convert_to_DF(acash_soup) if acash_soup else None
+            self.qincome_sheet = webscrap_back.convert_to_DF(qincome_soup) if qincome_soup else None
+            self.qbalance_sheet = webscrap_back.convert_to_DF(qbalance_soup) if qbalance_soup else None
+            self.qcash_flow_sheet = webscrap_back.convert_to_DF(qcash_soup) if qcash_soup else None
 
             self.price = price
             self.eps = eps
@@ -91,7 +92,7 @@ class Stock:
             return None
         else:
             shares = ttm/self.eps
-            return shares
+            return floor(shares)
 
     def market_cap(self):
         """Return the market capitalization of self.
@@ -105,7 +106,7 @@ class Stock:
             return None
         else:
             market_cap = shares * price
-            return price
+            return market_cap
 
     def pe_ratio(self):
         """Returns the Price-to-Earnings Ratio of self (TTM).
@@ -125,8 +126,9 @@ class Stock:
             quarters = self.qincome_sheet.columns
             revenue_ttm = 0.0
             for quarter in quarters:
-                revenue_ttm += self.qincome_sheet.loc["Total Revenue", recent]
-                shares = self.outstanding_shares()
+                revenue_ttm += self.qincome_sheet.loc["Total Revenue", quarter]
+            revenue_ttm*= 1000
+            shares = self.outstanding_shares()
         except Exception:
             return None
         else:
@@ -153,6 +155,11 @@ class Stock:
 
            Use: Indicates the recorded accounting amount for each share of common
            stock outstanding."""
+
+        recent = self.abalance_sheet.columns[0]
+        total_equity = self.abalance_sheet.loc["Total Equity", recent]
+        ratio = (total_equity*1000)/self.outstanding_shares()
+        return ratio
 
         try:
             recent = self.abalance_sheet.columns[0]
@@ -215,13 +222,14 @@ class Stock:
 
     """----------------------Profitability Ratios----------------------------"""
 
-    def return_total_assets(self):
+    def return_on_assets(self):
         """Returns the return on total assets of a company's asssets.
 
            Use: Indicates how good the compant is at using its assets to make money."""
 
+
         try:
-            net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
+            net_income = self.aincome_sheet.loc["Net Income", self.aincome_sheet.columns[0]]
             average_total = (self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[0]]+
                              self.abalance_sheet.loc["Total Assets", self.abalance_sheet.columns[1]])/2
         except Exception:
@@ -236,23 +244,34 @@ class Stock:
            Use: Indicates how effective the company is at turning the cash put
            into the business into geater gains and growth for the comapny and investors."""
 
-        try:
-            net_income_label = "Net Income Applicable to Common Shareholders"
-            iquarters = self.aincome_sheet.columns
-            bquarters = self.abalance_sheet.columns
-            net_income_ttm = 0.0
-            equity_ttm = 0.0
+        net_income_label = "Net Income Applicable to Common Shareholders"
+        net_income = self.aincome_sheet.loc[net_income_label, self.aincome_sheet.columns[0]]
 
-            for iquarter in iquarters:
-                net_income_ttm += self.qincome_sheet.loc[net_income_label, iquarter]
+        average_total = (self.abalance_sheet.loc["Total Equity", self.abalance_sheet.columns[0]]+
+                         self.abalance_sheet.loc["Total Equity", self.abalance_sheet.columns[1]])/2
 
-            for bquarter in bquarters:
-                equity_ttm += self.qincome_sheet.loc["Total Equity", iquarter]
-        except Exception:
-            return None
-        else:
-            ratio = net_income_ttm/equity_ttm
-            return ratio
+        ratio = net_income/average_total
+
+        return ratio
+
+
+        # try:
+        #     net_income_label = "Net Income Applicable to Common Shareholders"
+        #     iquarters = self.aincome_sheet.columns
+        #     bquarters = self.abalance_sheet.columns
+        #     net_income_ttm = 0.0
+        #     equity_ttm = 0.0
+        #
+        #     for iquarter in iquarters:
+        #         net_income_ttm += self.qincome_sheet.loc[net_income_label, iquarter]
+        #
+        #     for bquarter in bquarters:
+        #         equity_ttm += self.qincome_sheet.loc["Total Equity", bquarter]
+        # except Exception:
+        #     return None
+        # else:
+        #     ratio = net_income_ttm/equity_ttm
+        #     return ratio
 
     def profit_margin(self):
         """Returns the profit margin of self (Note: Percentage).
@@ -270,10 +289,15 @@ class Stock:
             ratio = net_income/revenue
             return ratio
 
-    def return_on_net_sales(self):
+    def return_on_sales(self):
         """Returns the return of net sales of a stock.
 
            Use: Shows the percentage of each sales dollar earned as net income."""
+
+        net_income = self.aincome_sheet.loc["Net Income", self.aincome_sheet.columns[0]]
+        revenue = self.aincome_sheet.loc["Total Revenue", self.aincome_sheet.columns[0]]
+        ratio = net_income/revenue
+        return ratio
 
         try:
             net_income = self.aincome_sheet.loc["Net income", self.aincome_sheet.columns[0]]
@@ -417,13 +441,12 @@ class Stock:
            Use: Measues the number of times operating income can cover interest expense."""
 
         try:
-            #want the latest year
             operating_income = self.aincome_sheet.loc["Operating Income", self.aincome_sheet.columns[0]]
             interest_expense = self.aincome_sheet.loc["Interest Expense", self.aincome_sheet.columns[0]]
         except Exception:
             return None
         else:
-            ratio = operating_income/interest_expense
+            ratio = operating_income/interest_expense if interest_expense > 0 else None
             return ratio
 
     """---------------------------Efficiency Ratios---------------------------"""
@@ -451,18 +474,25 @@ class Stock:
     def print_ratios(self):
         """Outputs the all the above ratios of a stock."""
 
-        names = ["Outstanding Shares: ", "P/E Ratio: ", "Sales/Share: ", "P/S Ratio: ",
-                "Book Value: ", "Price/Book Ratio: ", "Total Dividend: ", "Dividend Yield: ",
-                "Dividend Payout: ", "ROA: ", "ROE: ", "Return on Net Sales: ", "Gross Profit Percentage: ",
-                "Operating Income Percentage: ", "Current Ratio: ", "Quick Ratio: ", "Leverage Ratio: ",
-                "Debt Ratio: ", "Time-interest-earned ratio: ", "Assest turnover: "]
 
-        functions = [self.outstanding_shares(), self.pe_ratio(), self.sales_per_share(),
-                     self.price_sales_ratio(), self.book_value(), self.dividend(),
-                     self.dividend_yield(), self.return_total_assets(), self.return_on_net_sales(),
-                     self.gross_profit_percentage(), self.operating_income_percentage(),
-                     self.current_ratio(), self.quick_ratio(), self.leverage_ratio(),
-                     self.debt_ratio(), self.time_interest_earned_ratio(), self.assest_turnover()]
+        names = ["Outstanding Shares: ", "Market Cap: ", "PE Ratio: ", "Sales/Share: ",
+                 "Sales-Price: ", "Book-value: ", "Price Book Ratio: ", "Dividend: ",
+                 "Dividend Yield: ", "Dividend Payout: ", "ROA: ", "ROE: ", "Proftit Margin: ",
+                 "Return Net Sales: ", "Gross Profit: ", "Operating Income Percentage: ",
+                 "Current Ratio: ", "Quick Ratio: ", "Leverage Ratio: ", "Debt Ratio: ",
+                 "Time Interest Earned Ratio: ", "Asset Turnover: ", "High 52: ",
+                 "Low 52: "]
+
+        functions = [self.outstanding_shares(), self.market_cap(), self.pe_ratio(),
+                     self.sales_per_share(), self.price_sales_ratio(), self.book_value(),
+                     self.price_book_ratio(), self.dividend(), self.dividend_yield(),
+                     self.dividend_payout(), self.return_total_assets(), self.return_on_equity(),
+                     self.profit_margin(), self.return_on_net_sales(), self.gross_profit_percentage(),
+                     self.operating_income_percentage(), self.current_ratio(),
+                     self.quick_ratio(), self.cash_ratio(), self.leverage_ratio(),
+                     self.debt_ratio(), self.time_interest_earned_ratio(),
+                     self.assest_turnover(), self.high_52(), self.low_52()]
+
         length = len(names)
 
         for i in range(length):
@@ -482,9 +512,11 @@ class Stock:
 
             print("\n")
 
-    # def compare(stocks, functions):
-    #     #list of stock and functions
-    #
+
+
+
+
+
     # def compare_sheets(stock, sheet):
 
     """------------------------------Statistics------------------------------"""

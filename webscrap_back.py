@@ -1,6 +1,6 @@
 """
 TODO:
-- Error handling 
+- Error handling
 -Documentation
 -Consisteny
 -try to make it faster and robust
@@ -35,7 +35,8 @@ def read_data(url):
     """Returns html data as a string."""
 
     url = requests.get(url)
-    return url.text
+
+    return url.text if url else None
 
 def html_annual_parser(html):
     """Parses html to return the column headers of the table and the data with the table in a list."""
@@ -75,9 +76,12 @@ def html_annual_parser(html):
                     temp.append(data_pure.group(0))
             content.append(temp)
 
-    #not needed
-    content.remove(content[0])
-    return [dates, content]
+    #check if the data was avaible
+    if content:
+        content.remove(content[0])
+        return [dates, content]
+    else:
+        return None
 
 def html_quarterly_parser(html):
     """Parses html to return the column headers of the table and the data with the table in a list."""
@@ -114,10 +118,15 @@ def html_quarterly_parser(html):
                     temp.append(data_pure.group(0))
             content.append(temp)
 
-    #not needed
-    content.remove(content[0])
+    #check if the data was avaible
+    if content:
+        content.remove(content[0])
+        return [quarters, content]
+    else:
+        return None
+
     # content.remove(['Quarter Ending:'])
-    return [quarters, content]
+
 
 def convert_to_DF(lst):
     """Returns the elements in lst as DataFrames."""
@@ -165,10 +174,12 @@ def get_price(html):
     my_soup = soup(html, "html.parser")
 
     price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
-    price = price.replace("$", "")
-    price = price.replace(",", "")
-
-    return float(price)
+    if price:
+        price = price.replace("$", "")
+        price = price.replace(",", "")
+        return float(price)
+    else:
+        return None
 
 def get_eps(html):
     """Returns the earnings per share of ticker."""
@@ -177,9 +188,9 @@ def get_eps(html):
     raw_data = my_soup.findAll("div", {"class":"table-cell"})
     location = 29
     eps_raw = raw_data[location]
-    eps = re.search(r"-?\d*\.\d*",eps_raw.string).group(0)
+    eps = re.search(r"-?\d*\.\d*",eps_raw.string)
 
-    return float(eps)
+    return float(eps.group(0)) if eps else None
 
 def get_hist_data(ticker):
     """Returns 3 years of historical data of the ticker(data, close, volume, open, high, low)"""
