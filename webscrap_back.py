@@ -127,7 +127,6 @@ def html_quarterly_parser(html):
 
     # content.remove(['Quarter Ending:'])
 
-
 def convert_to_DF(lst):
     """Returns the elements in lst as DataFrames."""
 
@@ -166,8 +165,6 @@ def convert_to_DF(lst):
 
     return df
 
-
-
 def get_price(html):
     """Returns the price of ticker."""
 
@@ -192,9 +189,12 @@ def get_eps(html):
             if "Earnings Per Share (EPS)" in item.contents[1].contents[0]:
                 location = (raw_data.index(item))
     eps_raw = raw_data[location+1]
-    eps = re.search(r"-?\d*\.\d*",eps_raw.string)
-
-    return float(eps.group(0)) if eps else None
+    try:
+        eps = re.search(r"-?\d*\.\d*",eps_raw.string)
+    except TypeError:
+        return None
+    else:
+        return float(eps.group(0)) if eps else None
 
 def get_hist_data(ticker):
     """Returns 3 years of historical data of the ticker(data, close, volume, open, high, low)"""
