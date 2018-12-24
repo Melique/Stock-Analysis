@@ -43,17 +43,17 @@ class Stock:
             ticker = ticker.upper()
             links = webscrap_back.get_links(ticker)
 
-        except pandas.errors.EmptyDataError:
-            print("\"" + ticker + "\" is not valid or can't be found")
-        except TypeError:
-            print("\"" + ticker + "\" is not valid or can't be found")
-        else:
             size_pool = len(links)
             p = Pool(size_pool)
             html_data = p.map(webscrap_back.read_data, links)
             p.close()
             p.join()
 
+        except pandas.errors.EmptyDataError:
+            print("\"" + ticker + "\" is not valid or can't be found")
+        except TypeError:
+            print("\"" + ticker + "\" is not valid or can't be found")
+        else:
             aincome_soup = webscrap_back.html_annual_parser(html_data[0])
             abalance_soup = webscrap_back.html_annual_parser(html_data[1])
             acash_soup = webscrap_back.html_annual_parser(html_data[2])
@@ -62,6 +62,12 @@ class Stock:
             qcash_soup = webscrap_back.html_quarterly_parser(html_data[5])
             price  = webscrap_back.get_price(html_data[6])
             eps = webscrap_back.get_eps(html_data[7])
+            mc = webscrap_back.get_mc(html_data[8])
+
+            if aincome_soup is None:
+                print("\"" + ticker + "\" is not valid or can't be found")
+                self = None
+                return
 
             self.name = ticker
 
@@ -74,6 +80,7 @@ class Stock:
 
             self.price = price
             self.eps = eps
+            self.mc = mc
             self.hist_data = webscrap_back.get_hist_data(self.name)
 
     """------------------------Price Ratios---------------------------------"""

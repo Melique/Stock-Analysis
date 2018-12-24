@@ -25,9 +25,10 @@ def get_links(ticker):
     qcash_flow_sheet = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=cash-flow&data=quarterly"
     price = "https://www.nasdaq.com/symbol/" + ticker.lower() + "/financials?query=ratios"
     eps = "https://www.nasdaq.com/symbol/" + ticker.lower()
+    mc = "https://www.nasdaq.com/symbol/" + ticker.lower()
 
     sheets = [aincome_sheet, abalance_sheet, acash_flow_sheet, qincome_sheet,
-     qbalance_sheet, qcash_flow_sheet, price, eps];
+     qbalance_sheet, qcash_flow_sheet, price, eps, mc];
 
     return sheets
 
@@ -50,14 +51,19 @@ def html_annual_parser(html):
     table_headers = table_data.findAll("th")
     for header in table_headers:
         #finding the right date format
-        temp = re.search(r'(\d+/\d+/\d+)', header.string)
-        if temp:
-            dates.append(temp.group(0))
+        try:
+            temp = re.search(r'(\d+/\d+/\d+)', header.string)
+
+        except TypeError:
+            return None
         else:
-            try:
-                temp = re.search(r'(\d(st|nd|rd|th))', header.string)
-                if temp:  dates.append(temp.group(0))
-            except TypeError: pass
+            if temp:
+                dates.append(temp.group(0))
+            else:
+                try:
+                    temp = re.search(r'(\d(st|nd|rd|th))', header.string)
+                    if temp:  dates.append(temp.group(0))
+                except TypeError: pass
 
     #finds the content in each row of table_data
     table_rows = table_data.findAll("tr")
@@ -170,13 +176,14 @@ def get_price(html):
 
     my_soup = soup(html, "html.parser")
 
-    price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
-    if price:
+    try:
+        price = my_soup.findAll("div", {"class": "qwidget-dollar"})[0].string
         price = price.replace("$", "")
         price = price.replace(",", "")
-        return float(price)
-    else:
+    except IndexError:
         return None
+    else:
+        return float(price)
 
 def get_eps(html):
     """Returns the earnings per share of ticker."""
@@ -196,12 +203,33 @@ def get_eps(html):
     else:
         return float(eps.group(0)) if eps else None
 
+
+def get_mc(html):
+    my_soup = soup(html, "html.parser")
+    raw_data = my_soup.findAll("div", {"class":"table-cell"})
+    location = 0
+    for item in raw_data:
+        if item.b:
+            if "Market Cap" in item.contents[1].contents[0]:
+                location = (raw_data.index(item))
+    mc_raw = raw_data[location+1]
+    try:
+        mc = re.search(r'd?(\d+\,){1,5}\d{0,3}', str(mc_raw.string))
+    except TypeError:
+        return None
+    else:
+        return float(mc.group(0).replace(",", "")) if mc else None
+
+
 def get_hist_data(ticker):
     """Returns 3 years of historical data of the ticker(data, close, volume, open, high, low)"""
 
     now = datetime.date.today()
     start = datetime.date(now.year -3, now.month, now.day)
-    hist_data = web.DataReader(ticker, "iex", start, now)
-    hist_data = hist_data.reset_index()
-
-    return hist_data
+    try:
+        hist_data = web.DataReader(ticker, "iex", start, now)
+        hist_data = hist_data.reset_index()
+    except KeyError:
+        return None
+    else:
+        return hist_data
