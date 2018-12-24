@@ -90,34 +90,29 @@ class Stock:
            Use: outstanding shares is used for several financial ratios."""
 
         try:
-            net_income_label = "Net Income Applicable to Common Shareholders"
-            ttm = 0.0
-            quarters = self.qincome_sheet.columns
-            for quarter in quarters:
-                ttm += self.qincome_sheet.loc[net_income_label, quarter]*1000
-            if self.eps is None:
+            if self.mc is None or self.price is None:
                 raise TypeError
-        except Exception:
+        except TypeError:
             return None
-        else:
-            shares = ttm/self.eps
-            return floor(shares)
 
-    def market_cap(self):
-        """Return the market capitalization of self.
 
-           Use: Indicates the size of a company."""
+        ratio = self.mc/self.price
+        return ratio
 
-        try:
-            shares = self.outstanding_shares()
-            price = self.price
-            if shares is None or price is None:
-                raise TypeError
-        except Exception:
-            return None
-        else:
-            market_cap = shares * price
-            return market_cap
+        # try:
+        #     net_income_label = "Net Income Applicable to Common Shareholders"
+        #     ttm = 0.0
+        #     quarters = self.qincome_sheet.columns
+        #     for quarter in quarters:
+        #         ttm += self.qincome_sheet.loc[net_income_label, quarter]*1000
+        #     if self.eps is None:
+        #         raise TypeError
+        # except Exception:
+        #     return None
+        # else:
+        #     shares = ttm/self.eps
+        #     return floor(shares)
+
 
     def pe_ratio(self):
         """Returns the Price-to-Earnings Ratio of self (TTM).
@@ -523,7 +518,7 @@ class Stock:
         """Outputs the all the above ratios of a stock."""
 
 
-        names = ["Outstanding Shares: ", "Market Cap: ", "PE Ratio: ", "Sales/Share: ",
+        names = ["Outstanding Shares: ", "PE Ratio: ", "Sales/Share: ",
                  "Sales-Price: ", "Book-value: ", "Price Book Ratio: ", "ROA: ",
                  "ROE: ", "Proftit Margin: ","Return on Sales: ", "Gross Profit: ",
                  "Operating Income Percentage: ","Current Ratio: ", "Quick Ratio: ",
@@ -531,7 +526,7 @@ class Stock:
                  "Time Interest Earned Ratio: ","Asset Turnover: ", "High 52: ",
                  "Low 52: "]
 
-        functions = [self.outstanding_shares(), self.market_cap(), self.pe_ratio(),
+        functions = [self.outstanding_shares(), self.pe_ratio(),
                      self.sales_per_share(), self.price_sales_ratio(), self.book_value(),
                      self.price_book_ratio(), self.return_on_assets(), self.return_on_equity(),
                      self.profit_margin(), self.return_on_sales(), self.gross_profit_percentage(),
@@ -543,7 +538,10 @@ class Stock:
         length = len(names)
 
         for i in range(length):
-            print(names[i], functions[i])
+            if functions[i]:
+                print(names[i] , "{:,.3f}".format((functions[i])))
+            else:
+                print(names[i] , (functions[i]))
 
     def print_summaries(self):
         """Prints out a formatted summary of all columns in self.hist_data."""
@@ -555,4 +553,4 @@ class Stock:
             print(self.name + " " + label + ":")
             temp_summ = self.summary(self.hist_data.loc[:,label].tolist(), length)
             for key,value in temp_summ.items():
-                    print("\t",key + ": ",value)
+                    print("\t",key , ": {:,.3f}".format(value))
