@@ -89,6 +89,7 @@ def html_annual_parser(html):
     else:
         return None
 
+
 def html_quarterly_parser(html):
     """Parses html to return the column headers of the table and the data with the table in a list."""
 
@@ -109,6 +110,14 @@ def html_quarterly_parser(html):
     #finds the content in each row of table_data
     table_rows = table_data.findAll("tr")
     content = []
+    dates = ['Quarter Ending:']
+
+    dates_raw = table_rows[1].findAll("th")
+
+    for date_raw in dates_raw:
+        pure = re.search(r'(\d{1,2}/\d{1,2}/\d{1,4})', str(date_raw.string))
+        if pure:
+            dates.append(pure.group(0))
 
     for row in table_rows:
         #each new row should have <th>. Already dealt with the first item
@@ -120,18 +129,21 @@ def html_quarterly_parser(html):
             for item in data_raw:
                 #looking for money
                 data_pure = re.search(r'\(?\$\d*,?\d*,?\d*\)?', str(item))
+
                 if data_pure:
                     temp.append(data_pure.group(0))
             content.append(temp)
 
+    content.insert(0,dates)
+
     #check if the data was avaible
     if content:
-        content.remove(content[0])
+        content.remove(content[1])
+        content.remove(content[1])
         return [quarters, content]
     else:
         return None
 
-    # content.remove(['Quarter Ending:'])
 
 def convert_to_DF(lst):
     """Returns the elements in lst as DataFrames."""
@@ -163,7 +175,8 @@ def convert_to_DF(lst):
 
             elem = elem.replace("$","")
             elem = elem.replace(",", "")
-            temp.append(float(elem))
+
+            temp.append(elem)
 
         format_data.append(temp)
 
